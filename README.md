@@ -70,13 +70,10 @@ flowchart TD
     GetApiKey --> GetWeather
 
     GetWeather --> Decision
-
     Decision -- No --> End
-
     Decision -- Yes --> UpdateSite
 
     UpdateSite -->  FinishUpdate
-
     FinishUpdate--> End
 ```
 
