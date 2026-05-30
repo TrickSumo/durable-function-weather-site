@@ -42,19 +42,39 @@ EventBridge Scheduler (cron)
 flowchart TD
 
     Scheduler["EventBridge Scheduler<br/>(Cron)"]
-    Scheduler --> Durable["Lambda Durable Function"]
 
-    Durable --> GetStatus["ctx.step('get-site-status')"]
-    GetStatus --> GetApiKey["ctx.step('get-api-key')"]
-    GetApiKey --> GetWeather["ctx.step('get-weather')"]
+    Durable["Lambda Durable Function"]
 
-    GetWeather --> Decision{"Weather Changed?"}
+    GetStatus["ctx.step('get-site-status')<br/>SSM GetParameter"]
+    GetApiKey["ctx.step('get-api-key')<br/>Secrets Manager"]
+    GetWeather["ctx.step('get-weather')<br/>OpenWeatherMap API"]
 
-    Decision -- Yes --> UpdateSite["ctx.step('update-site')"]
-    Decision -- No --> End["Complete"]
+    Decision{"Weather Changed?"}
 
-    UpdateSite --> UpdateSSM["ctx.step('update-ssm')"]
-    UpdateSite --> InvalidateCF["ctx.step('invalidate-cf')"]
+    UpdateSite["ctx.step('update-site')<br/>Generate HTML<br/>S3 PutObject"]
+
+    UpdateSSM["ctx.step('update-ssm')<br/>SSM PutParameter"]
+    InvalidateCF["ctx.step('invalidate-cf')<br/>CloudFront CreateInvalidation"]
+
+    End["Workflow Complete"]
+
+    Scheduler --> Durable
+
+    Durable --> GetStatus
+    GetStatus --> GetApiKey
+    GetApiKey --> GetWeather
+
+    GetWeather --> Decision
+
+    Decision -- No --> End
+
+    Decision -- Yes --> UpdateSite
+
+    UpdateSite --> UpdateSSM
+    UpdateSite --> InvalidateCF
+
+    UpdateSSM --> End
+    InvalidateCF --> End
 ```
 
 ## 🛠️ Technologies
