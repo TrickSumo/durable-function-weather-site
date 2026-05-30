@@ -42,20 +42,12 @@ EventBridge Scheduler (cron)
 flowchart TD
 
     Scheduler["EventBridge Scheduler<br/>(Cron)"]
-
     Durable["Lambda Durable Function"]
-
-    GetStatus["ctx.step('get-site-status')<br/>SSM GetParameter"]
-    GetApiKey["ctx.step('get-api-key')<br/>Secrets Manager"]
-    GetWeather["ctx.step('get-weather')<br/>OpenWeatherMap API"]
-
+    GetStatus["context.step('get-site-status')<br/>SSM GetParameter"]
+    GetApiKey["context.step('get-api-key')<br/>Secrets Manager"]
+    GetWeather["context.step('get-weather')<br/>OpenWeatherMap API"]
     Decision{"Weather Changed?"}
-
-    UpdateSite["ctx.step('update-site')<br/>Generate HTML<br/>S3 PutObject"]
-
-    UpdateSSM["ctx.step('update-ssm')<br/>SSM PutParameter"]
-    InvalidateCF["ctx.step('invalidate-cf')<br/>CloudFront CreateInvalidation"]
-
+    UpdateSite["context.step('update-site')<br/>Generate HTML<br/>S3 PutObject"]
     End["Workflow Complete"]
 
    subgraph FinishUpdate["context.parallel('finish-update')"]
@@ -64,15 +56,12 @@ flowchart TD
     end
 
     Scheduler --> Durable
-
     Durable --> GetStatus
     GetStatus --> GetApiKey
     GetApiKey --> GetWeather
-
     GetWeather --> Decision
     Decision -- No --> End
     Decision -- Yes --> UpdateSite
-
     UpdateSite -->  FinishUpdate
     FinishUpdate--> End
 ```
