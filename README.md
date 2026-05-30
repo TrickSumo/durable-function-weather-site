@@ -38,6 +38,25 @@ EventBridge Scheduler (cron)
              ])
 ```
 
+```mermaid
+flowchart TD
+
+    Scheduler["EventBridge Scheduler<br/>(Cron)"]
+    Scheduler --> Durable["Lambda Durable Function"]
+
+    Durable --> GetStatus["ctx.step('get-site-status')"]
+    GetStatus --> GetApiKey["ctx.step('get-api-key')"]
+    GetApiKey --> GetWeather["ctx.step('get-weather')"]
+
+    GetWeather --> Decision{"Weather Changed?"}
+
+    Decision -- Yes --> UpdateSite["ctx.step('update-site')"]
+    Decision -- No --> End["Complete"]
+
+    UpdateSite --> UpdateSSM["ctx.step('update-ssm')"]
+    UpdateSite --> InvalidateCF["ctx.step('invalidate-cf')"]
+```
+
 ## 🛠️ Technologies
 
 - **Runtime**: Node.js 24, TypeScript
