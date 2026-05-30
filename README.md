@@ -58,6 +58,11 @@ flowchart TD
 
     End["Workflow Complete"]
 
+   subgraph FinishUpdate["context.parallel('finish-update')"]
+        UpdateSSM["ctx.step('update-ssm')<br/>SSM PutParameter"]
+        InvalidateCF["ctx.step('invalidate-cf')<br/>CloudFront Invalidation"]
+    end
+
     Scheduler --> Durable
 
     Durable --> GetStatus
@@ -70,11 +75,9 @@ flowchart TD
 
     Decision -- Yes --> UpdateSite
 
-    UpdateSite --> UpdateSSM
-    UpdateSite --> InvalidateCF
+    UpdateSite -->  FinishUpdate
 
-    UpdateSSM --> End
-    InvalidateCF --> End
+    FinishUpdate--> End
 ```
 
 ## 🛠️ Technologies
