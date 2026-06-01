@@ -38,6 +38,34 @@ EventBridge Scheduler (cron)
              ])
 ```
 
+```mermaid
+flowchart TD
+
+    Scheduler["EventBridge Scheduler<br/>(Cron)"]
+    Durable["Lambda Durable Function"]
+    GetStatus["context.step('get-site-status')<br/>SSM GetParameter"]
+    GetApiKey["context.step('get-api-key')<br/>Secrets Manager"]
+    GetWeather["context.step('get-weather')<br/>OpenWeatherMap API"]
+    Decision{"Weather Changed?"}
+    UpdateSite["context.step('update-site')<br/>Generate HTML<br/>S3 PutObject"]
+    End["Workflow Complete"]
+
+   subgraph FinishUpdate["context.parallel('finish-update')"]
+        UpdateSSM["ctx.step('update-ssm')<br/>SSM PutParameter"]
+        InvalidateCF["ctx.step('invalidate-cf')<br/>CloudFront Invalidation"]
+    end
+
+    Scheduler --> Durable
+    Durable --> GetStatus
+    GetStatus --> GetApiKey
+    GetApiKey --> GetWeather
+    GetWeather --> Decision
+    Decision -- No --> End
+    Decision -- Yes --> UpdateSite
+    UpdateSite -->  FinishUpdate
+    FinishUpdate--> End
+```
+
 ## 🛠️ Technologies
 
 - **Runtime**: Node.js 24, TypeScript
