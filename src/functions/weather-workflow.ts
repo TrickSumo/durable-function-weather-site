@@ -1,5 +1,6 @@
 import {
   DurableContext,
+  BatchResult,
   withDurableExecution,
 } from '@aws/durable-execution-sdk-js'
 import {
@@ -25,7 +26,7 @@ const cloudfront = new CloudFrontClient({})
 
 export const handler = withDurableExecution(
   async (_event: unknown, context: DurableContext) => {
-    const config = await context.parallel('fetch-config', [
+    const config: BatchResult<string> = await context.parallel('fetch-config', [
       async (ctx: DurableContext) => {
         return await ctx.step('get-site-status', async () => {
           const result = await ssm.send(
