@@ -25,23 +25,26 @@ const cloudfront = new CloudFrontClient({})
 
 export const handler = withDurableExecution(
   async (_event: unknown, context: DurableContext) => {
-    const siteStatus = await context.step('get-site-status', async () => {
-      const result = await ssm.send(
-        new GetParameterCommand({
-          Name: process.env.SSM_PARAM_NAME!,
-        }),
-      )
-      return result.Parameter!.Value!
-    })
+    const config = await context.parallel('fetch-config', [
+      async (ctx: DurableContext) => {
+        return await ctx.step('get-site-status', async () => {
+          const result = await ssm.send(
+            new GetParameterCommand({ Name: process.env.SSM_PARAM_NAME! }),
+          )
+          return result.Parameter!.Value!
+        })
+      },
+      async (ctx: DurableContext) => {
+        return await ctx.step('get-api-key', async () => {
+          const result = await secretsManager.send(
+            new GetSecretValueCommand({ SecretId: 'weather-site-api-key' }),
+          )
+          return result.SecretString!
+        })
+      },
+    ])
 
-    const apiKey = await context.step('get-api-key', async () => {
-      const result = await secretsManager.send(
-        new GetSecretValueCommand({
-          SecretId: 'weather-site-api-key',
-        }),
-      )
-      return result.SecretString!
-    })
+    const [siteStatus, apiKey] = config.getResults() as [string, string]
 
     const currentWeather = await context.step(
       'get-weather',
